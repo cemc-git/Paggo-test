@@ -1,5 +1,6 @@
 from typing import Any, Dict, List
 import httpx
+from models import DATACOLUMNS
 
 class SourceApiClient:
     SOURCE_URL = "http://source_db_api:8000/data"
@@ -8,9 +9,9 @@ class SourceApiClient:
     async def get_wind_speed_info_from_date(date: str) -> List[Dict[str, Any]]:
         payload = {
             "date": date,
-            "wind_speed": True,
-            "power": False,
-            "ambient_temperature": False
+            DATACOLUMNS.WIND_SPEED: True,
+            DATACOLUMNS.POWER: False,
+            DATACOLUMNS.AMBIENT_TEMPERATURE: False
         }
         async with httpx.AsyncClient() as client:
             response = await client.get(SourceApiClient.SOURCE_URL, params=payload)
@@ -21,9 +22,9 @@ class SourceApiClient:
     async def get_power_info_from_date(date: str) -> List[Dict[str, Any]]:
         payload = {
             "date": date,
-            "wind_speed": False,
-            "power": True,
-            "ambient_temperature": False
+            DATACOLUMNS.WIND_SPEED: False,
+            DATACOLUMNS.POWER: True,
+            DATACOLUMNS.AMBIENT_TEMPERATURE: False
         }
         async with httpx.AsyncClient() as client:
             response = await client.get(SourceApiClient.SOURCE_URL, params=payload)
@@ -34,9 +35,9 @@ class SourceApiClient:
     async def get_ambient_temperature_from_date(date: str) -> List[Dict[str, Any]]:
         payload = {
             "date": date,
-            "wind_speed": False,
-            "power": False,
-            "ambient_temperature": True
+            DATACOLUMNS.WIND_SPEED: False,
+            DATACOLUMNS.POWER: False,
+            DATACOLUMNS.AMBIENT_TEMPERATURE: True
         }
         async with httpx.AsyncClient() as client:
             response = await client.get(SourceApiClient.SOURCE_URL, params=payload)
@@ -47,9 +48,9 @@ class SourceApiClient:
     async def get_full_data_from_date(date: str) -> List[Dict[str, Any]]:
         payload = {
             "date": date,
-            "wind_speed": True,
-            "power": True,
-            "ambient_temperature": True
+            DATACOLUMNS.WIND_SPEED: True,
+            DATACOLUMNS.POWER: True,
+            DATACOLUMNS.AMBIENT_TEMPERATURE: True
         }
         async with httpx.AsyncClient() as client:
             response = await client.get(SourceApiClient.SOURCE_URL, params=payload)

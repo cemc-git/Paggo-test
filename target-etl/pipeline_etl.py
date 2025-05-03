@@ -10,7 +10,7 @@ from create_table import create_signal_table_if_not_exists
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from db_target import Signal
-
+from models import SIGNALCOLUMNS, DATACOLUMNS
 
 def generate_dates(start_date: str, days: int = 10) -> List[str]:
     """Retorna um conjunto de datas após a data fornecida já no formato da API. Padrão de 10 datas"""
@@ -30,17 +30,17 @@ async def fetch_and_store_power_data(date_str: str, etl: SourceApiClient, sessio
     print(f"Processando: {date_str}")
     wind_data = await etl.get_power_info_from_date(date_str)
     df = pd.DataFrame(wind_data)
-    if 'timestamp' in df.columns:
-        df['timestamp'] = pd.to_datetime(df['timestamp'])
+    if DATACOLUMNS.TIMESTAMP in df.columns:
+        df[DATACOLUMNS.TIMESTAMP] = pd.to_datetime(df[DATACOLUMNS.TIMESTAMP])
     else:
-        print(f"[Erro] Coluna 'timestamp' não encontrada para a data {date_str}")
+        print(f"[Erro] Coluna {DATACOLUMNS.TIMESTAMP} não encontrada para a data {date_str}")
         print(df.head())
         return
 
-    df['timestamp'] = pd.to_datetime(df['timestamp'])
-    df.set_index('timestamp', inplace=True)
+    df[DATACOLUMNS.TIMESTAMP] = pd.to_datetime(df[DATACOLUMNS.TIMESTAMP])
+    df.set_index(DATACOLUMNS.TIMESTAMP, inplace=True)
 
-    grouped = df['power'].resample('10min').agg(['mean', 'min', 'max', 'std'])
+    grouped = df[DATACOLUMNS.POWER].resample('10min').agg(['mean', 'min', 'max', 'std'])
 
     try:
         for ts, row in grouped.iterrows():
@@ -55,11 +55,11 @@ async def fetch_and_store_power_data(date_str: str, etl: SourceApiClient, sessio
             }
             for metric_name, value in metrics.items():
                 signal = {
-                    'name': 'power',
-                    'data': metric_name,
-                    'timestamp': ts,
-                    'signal_id': signal_id,
-                    'value': float(value)
+                    SIGNALCOLUMNS.NAME: DATACOLUMNS.POWER,
+                    SIGNALCOLUMNS.DATA: metric_name,
+                    SIGNALCOLUMNS.TIMESTAMP: ts,
+                    SIGNALCOLUMNS.SIGNAL_ID: signal_id,
+                    SIGNALCOLUMNS.VALUE: float(value)
                 }
                 session.add(Signal(**signal))
             session.commit()
@@ -75,22 +75,22 @@ async def fetch_and_store_wind_data(date_str: str, etl: SourceApiClient, session
     print(f"Processando: {date_str}")
     wind_data = await etl.get_wind_speed_info_from_date(date_str)
     df = pd.DataFrame(wind_data)
-    if 'timestamp' in df.columns:
-        df['timestamp'] = pd.to_datetime(df['timestamp'])
+    if DATACOLUMNS.TIMESTAMP in df.columns:
+        df[DATACOLUMNS.TIMESTAMP] = pd.to_datetime(df[DATACOLUMNS.TIMESTAMP])
     else:
-        print(f"[Erro] Coluna 'timestamp' não encontrada para a data {date_str}")
+        print(f"[Erro] Coluna {DATACOLUMNS.TIMESTAMP} não encontrada para a data {date_str}")
         print(df.head())
         return
 
-    df['timestamp'] = pd.to_datetime(df['timestamp'])
-    df.set_index('timestamp', inplace=True)
+    df[DATACOLUMNS.TIMESTAMP] = pd.to_datetime(df[DATACOLUMNS.TIMESTAMP])
+    df.set_index(DATACOLUMNS.TIMESTAMP, inplace=True)
 
-    grouped = df['wind_speed'].resample('10min').agg(['mean', 'min', 'max', 'std'])
+    grouped = df[DATACOLUMNS.WIND_SPEED].resample('10min').agg(['mean', 'min', 'max', 'std'])
 
     try:
         for ts, row in grouped.iterrows():
             interval_index = ts.hour * 6 + ts.minute // 10 + 1
-            signal_id = f"wind_speed_{ts.day:02d}{ts.month:02d}{ts.year}_{interval_index:04d}"
+            signal_id = f"{DATACOLUMNS.WIND_SPEED}_{ts.day:02d}{ts.month:02d}{ts.year}_{interval_index:04d}"
 
             metrics = {
                 'mean': row['mean'],
@@ -100,11 +100,11 @@ async def fetch_and_store_wind_data(date_str: str, etl: SourceApiClient, session
             }
             for metric_name, value in metrics.items():
                 signal = {
-                    'name': 'wind_speed',
-                    'data': metric_name,
-                    'timestamp': ts,
-                    'signal_id': signal_id,
-                    'value': float(value)
+                    SIGNALCOLUMNS.NAME: DATACOLUMNS.WIND_SPEED,
+                    SIGNALCOLUMNS.DATA: metric_name,
+                    SIGNALCOLUMNS.TIMESTAMP: ts,
+                    SIGNALCOLUMNS.SIGNAL_ID: signal_id,
+                    SIGNALCOLUMNS.VALUE: float(value)
                 }
                 session.add(Signal(**signal))
             session.commit()

@@ -8,7 +8,7 @@ engine = create_engine(DATABASE_URL)
 
 def create_signal_table_if_not_exists():
     inspector = inspect(engine)
-    if 'tb_signal' not in inspector.get_table_names():
+    if 'signal' not in inspector.get_table_names():
         print("Criando tabela signal")
         Signal.metadata.create_all(engine)
     else:
