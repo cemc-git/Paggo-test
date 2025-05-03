@@ -1,0 +1,66 @@
+version: "3.8"
+
+services:
+  postgres-db-source:
+    image: library/postgres:14.17
+    environment:
+      POSTGRES_DB: source
+      POSTGRES_USER: paggo
+      POSTGRES_PASSWORD: paggo123
+    ports:
+      - "5432:5432"
+    volumes:
+      - ../db_source/db_source.sql:/docker-entrypoint-initdb.d/init_data.sql
+    deploy:
+      resources:
+        limits:
+          memory: 1024M
+        reservations:
+          memory: 1024M
+  postgres-db-target:
+    image: library/postgres:14.17
+    environment:
+      POSTGRES_DB: target
+      POSTGRES_USER: paggo
+      POSTGRES_PASSWORD: paggo123
+    ports:
+      - "5433:5432"
+    deploy:
+      resources:
+        limits:
+          memory: 1024M
+        reservations:
+          memory: 1024M
+  pipeline_etl:
+    build:
+      context: ..
+      dockerfile: docker/images/Dockerfile.etl
+    stdin_open: true
+    tty: true
+    depends_on:
+      - postgres-db-source
+      - postgres-db-target
+      - source_db_api
+    deploy:
+      resources:
+        limits:
+          memory: 1024M
+        reservations:
+          memory: 1024M
+    ports:
+      - "8080:8080"
+  source_db_api:
+    build:
+      context: ..
+      dockerfile: docker/images/Dockerfile.api
+    tty: true
+    depends_on:
+      - postgres-db-source
+    deploy:
+      resources:
+        limits:
+          memory: 1024M
+        reservations:
+          memory: 1024M
+    ports:
+      - "8000:8000"

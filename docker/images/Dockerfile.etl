@@ -1,0 +1,24 @@
+FROM python:3.11-slim
+
+# Define diretório de trabalho
+WORKDIR /paggo/target-etl
+
+# Data para fazer o ETL
+ENV DATE_INPUT=05-05-2025
+# Copia os arquivos de requirements
+COPY target-etl/requirements.txt .
+COPY docker/images/entrypoint.sh /app/entrypoint.sh
+
+# Instala os pacotes Python
+RUN pip install --no-cache-dir -r requirements.txt
+RUN apt-get update && apt-get install -y netcat-openbsd
+
+
+RUN chmod +x /app/entrypoint.sh
+ENTRYPOINT ["/app/entrypoint.sh"]
+
+# Copia o restante do código do projeto de target
+COPY target-etl/ .
+
+# Comando padrão
+CMD ["python", "pipeline_etl.py"]
